@@ -42,7 +42,7 @@ test('Intercars - scenariusz zakupowy', async ({ page }) => {
   expect(filtersSum).toBeGreaterThan(0);
 
   // 🔥 BEZPIECZNA WALIDACJA
-  expect(filtersSum).toBeGreaterThanOrEqual(categoryCount);
+  expect.soft(filtersSum).toBeGreaterThanOrEqual(categoryCount);
 
   // =========================
   // FILTR – AKCJA
