@@ -3,28 +3,52 @@ import { Page, expect } from '@playwright/test';
 export class FilterPage {
   constructor(private page: Page) {}
 
-  async applyRandomFilter(): Promise<number> {
-    const filterLinks = this.page
+  private get filterLinks() {
+    return this.page
       .locator('.filters a')
       .filter({ has: this.page.locator('.group-filter-name') });
+  }
 
-    await expect(filterLinks.first()).toBeVisible({ timeout: 60000 });
+  async waitForFilters() {
+    await expect(this.filterLinks.first()).toBeVisible({ timeout: 60000 });
+  }
 
-    const count = await filterLinks.count();
+  async getFiltersSum(): Promise<number> {
+    await this.waitForFilters();
+
+    const count = await this.filterLinks.count();
 
     let sum = 0;
 
     for (let i = 0; i < count; i++) {
-      const text = await filterLinks.nth(i).innerText();
+      const text = await this.filterLinks.nth(i).innerText();
       const match = text.replace(/\s/g, '').match(/\((\d+)\)/);
-      if (match) sum += parseInt(match[1], 10);
+
+      if (match) {
+        sum += parseInt(match[1], 10);
+      }
     }
+
+    return sum;
+  }
+
+  async applyRandomFilter() {
+    await this.waitForFilters();
+
+    const count = await this.filterLinks.count();
 
     const randomIndex = Math.floor(Math.random() * Math.min(count, 5));
 
-    await filterLinks.nth(randomIndex).click();
-    await this.page.waitForLoadState('networkidle');
+    const selected = this.filterLinks.nth(randomIndex);
 
-    return sum;
+    const filterName = await selected
+      .locator('.group-filter-name')
+      .innerText()
+      .catch(() => 'UNKNOWN');
+
+    console.log('🎯 Selected filter:', filterName);
+
+    await selected.click();
+    await this.page.waitForLoadState('networkidle');
   }
 }
